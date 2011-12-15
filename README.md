@@ -10,6 +10,12 @@ API Doc: {Condi}
 
 Copyright (C) 2011 by Larry Kyrala. MIT Licensed.
 
+Installation
+------------
+
+    gem install condi
+
+
 Example
 -------
 
