@@ -1,2 +1,5 @@
 --no-private
 --protected
+--title "Condi Documentation"
+--markup markdown
+--readme README.md
