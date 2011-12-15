@@ -7,7 +7,7 @@ PKG_VERSION = '0.0.1'
 
 SRC_FILES = Dir.glob('lib/**/*')
 TST_FILES = Dir.glob('test/**/*')
-EXTRA_DOC_FILES = ["README.md", "LICENSE"]
+EXTRA_DOC_FILES = ["README.md", "MIT-LICENSE"]
 
 
 PKG_FILES = [SRC_FILES, EXTRA_DOC_FILES].flatten
