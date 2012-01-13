@@ -3,7 +3,7 @@ require 'rake/testtask'
 require 'yard'
 
 
-PKG_VERSION = '0.0.1'
+PKG_VERSION = '0.0.5'
 
 SRC_FILES = Dir.glob('lib/**/*')
 TST_FILES = Dir.glob('test/**/*')

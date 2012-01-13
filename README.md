@@ -4,11 +4,14 @@ Condi
 
 Condi is a gem that you use with Rails to make it easier to cleanly implement conditional elements in a view.
 
-Condi allows you to define predicates in the controller that are callable in the view without relying on unneeded instance variables or business logic in the views.  Because the predicates are defined dynamically during a controller action, they are easy to find and easy to use without hopping around multiple files.
+Condi allows you to define boolean-valued *predicates* in the controller that are callable in the view without relying on unneeded instance variables or business logic in the views.  Because the predicates are defined dynamically during a controller action, they are easy to find and easy to use without hopping around multiple files.
+
+Condi also allows definition of *synonyms* that can return any value (not just booleans).
+
 
 API Doc: {Condi}
 
-Copyright (C) 2011 by Larry Kyrala. MIT Licensed.
+Copyright (C) 2012 by Larry Kyrala. MIT Licensed.
 
 Installation
 ------------
@@ -16,10 +19,10 @@ Installation
     gem install condi
 
 
-Example
--------
+A Simple Example
+----------------
 
-For example, say you have a User who has various roles and a shopping Cart that contains items. Your StoreController loads the current User and Cart objects, and your store view displays the User and Cart information.  But let's say that orders over a certain amount for new customers should show a "free ground shipping" option.  With Condi you can do the following:
+For example, say you have a User who has various roles and a shopping Cart that contains items. Your StoreController loads the current User and Cart objects, and your store view displays the User and Cart information.  But let's say that orders over a certain amount for new customers should show a "free ground shipping" option.  With Condi you can define a `predicate` that does the following:
 
 `app/controllers/store_controller.rb:`
 
@@ -40,6 +43,77 @@ For example, say you have a User who has various roles and a shopping Cart that 
         <%= f.radio_button("cart", "shipping", "free_ground") %>
       <% end %>
     <% end %> 
+
+
+Predicates with Arguments
+-------------------------
+
+Say you would like to monitor your cart status and highlight items that are shipped but haven't arrived yet.  You would like to hand the collection of items off to a partial, but how can you use
+a predicate in this situation? You need a predicate with an argument!
+
+`app/controllers/store_controller.rb:`
+
+    class StoreController
+      include Condi
+      
+      def items
+        cart = Cart.find(cart_id)
+        @items = cart.items
+        predicate(:shipping?) { |item| item.status == :shipped && DeliveryService.status(item.tracking_number) !~ /arrived/ }
+      end
+    end
+
+`app/views/store/items.html.erb:`
+
+    <table>
+      <%= render :partial => "item", :collection => @items %>
+    </table>
+
+`app/views/store/_item.html.erb:`
+    
+    <% if shipping?(item) %>
+      <tr class="shipping">
+    <% else %>
+      <tr>
+    <% end %>
+      <td><%= item.to_s %></td>
+    </tr>
+ 
+
+Synonyms: defining blocks that return non-boolean values
+--------------------------------------------------------
+
+Although the previous example works, wouldn't it be nicer if we could simply define a `synonym` that
+returns the css class we need for a given item?
+
+`app/controllers/store_controller.rb:`
+
+    class StoreController
+      include Condi
+      
+      def items
+        cart = Cart.find(cart_id)
+        @items = cart.items
+        synonym(:css_for_item_status) do |item| 
+          if item.status == :shipped 
+            if DeliveryService.status(item.tracking_number) !~ /arrived/
+              "shipping"
+            else
+              "shipped"
+            end
+          else
+            "processing"
+          end
+        end
+      end
+    end
+
+`app/views/store/_item.html.erb:`
+    
+    <tr class="<%= css_for_item_status %>">
+      <td><%= item.to_s %></td>
+    </tr>
+
 
 The Problem
 -----------
@@ -75,7 +149,7 @@ Not the cleanest approach since business logic is in our views now.  What's anot
       <% end %>
     <% end %> 
 
-We haven't gained much except shuffling arguments around.
+We haven't gained much except shuffling arguments around and we're coupling Carts with Users unnecessarily.
 
 
 Or, we could put the predicate in a helper and remove the args:
@@ -123,14 +197,37 @@ How does this work?  Behind the scenes, `predicate` defines an instance method o
 Advantages
 ----------
 
-* Because predicates are closures, there is less of a chance that helpers and controllers and views get "mixed up" -- i.e. someone copies some code from one view to another but forgets to set the correct instance variables in the controller.
+* Because predicates are closures, you only have to worry about setting context once in the controller action instead of coordinating context across multiple files. This keeps your views functional and makes them easier to refactor without breaking existing business logic.
 
-* Also, the Model shouldn't define such predicates, because they control behavior in the view, not to mention that predicates can orchestrate several Models together with business logic.  The Controller is arguably a better place to define such predicates from an MVC perspective.
+* Placing predicates in the Controller allows them to orchestrate multiple Models without breaking encapsulation between Models.  The Controller is arguably a better place to define such predicates from an MVC perspective.
 
-* Condi makes it simple to define predicates in the Controller and call them from the view without cluttering the helper namespace and creating a maze of unique names for every action.  Condi is more flexible.
+* Condi makes it simple to define predicates and synonyms in the Controller and call them from the view without cluttering the helper namespace and creating a maze of unique names for every action.  Condi is more flexible.
 
-* Another important advantage of the predicate being defined as an instance method on the Controller during an action-view execution is that the predicate method will never exist on the Controller for subsequent actions -- hence the predicate can never be inadvertently called as an action itself.
+* Another advantage of the predicate being defined dynamically on the Controller is that the predicate can never be inadvertently called as an action itself.  Condi offers better encapsulation of state.
+
+* Condi works with Rails 2 and Rails 3 apps equally well.
 
 
+Disadvantages
+-------------
 
+* Controllers may become "thicker" than you might like.
+
+* It may be awkward to share predicates across multiple actions.  But if you think about it, it is awkward to share context as well.  Filters are a common solution for both problems.  You can define your predicates in a before_filter method to ensure that both the context and the predicates will be sharable. 
+
+
+Background
+----------
+
+Condi is something I wanted to explore as a response to the general problem of implementing *business logic* and rules in Rails apps. 
+
+* Rules-engines exist (i.e. `rools`), but are heavier-weight than Condi and can be complex to use.
+
+* Rails `cells` is a promising component framework, but is also on the heavy side and may not fit well with legacy apps.
+
+* Render-partial locals are a decent lighter-weight alternative to `cells`, but can sometimes be tricky to keep consistent across multiple controller action contexts.
+
+* Doing the "right thing" isn't always an option in business logic.  If a customer wants to pay you a ton of money but your business model doesn't support it, are you going to refuse the money or change your business model? 
+
+* If business logic turns into a mess, at least we can strive to contain the rules in one place/context so that we can identify which problems are due to inconsistency in the business rules and which are due to coding errors.
 
