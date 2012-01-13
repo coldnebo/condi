@@ -48,7 +48,7 @@ For example, say you have a User who has various roles and a shopping Cart that 
 Predicates with Arguments
 -------------------------
 
-Say you would like to monitor your cart status and highlight items that are shipped but haven't arrived yet.  You would like to hand the collection of items off to a partial, but how can you use
+Say you would like to monitor your cart status and highlight items that are shipped but haven't arrived yet if there are three or more items in the cart.  You would like to hand the collection of items off to a partial, but how can you use
 a predicate in this situation? You need a predicate with an argument!
 
 `app/controllers/store_controller.rb:`
@@ -59,7 +59,9 @@ a predicate in this situation? You need a predicate with an argument!
       def items
         cart = Cart.find(cart_id)
         @items = cart.items
-        predicate(:shipping?) { |item| item.status == :shipped && DeliveryService.status(item.tracking_number) !~ /arrived/ }
+        predicate(:shipping?) { |item| @items.count >= 3 && 
+          item.status == :shipped && 
+          DeliveryService.status(item.tracking_number) !~ /arrived/ }
       end
     end
 
@@ -95,7 +97,7 @@ returns the css class we need for a given item?
         cart = Cart.find(cart_id)
         @items = cart.items
         synonym(:css_for_item_status) do |item| 
-          if item.status == :shipped 
+          if @items.count >= 3 && item.status == :shipped 
             if DeliveryService.status(item.tracking_number) !~ /arrived/
               "shipping"
             else
@@ -214,6 +216,8 @@ Disadvantages
 * Controllers may become "thicker" than you might like.
 
 * It may be awkward to share predicates across multiple actions.  But if you think about it, it is awkward to share context as well.  Filters are a common solution for both problems.  You can define your predicates in a before_filter method to ensure that both the context and the predicates will be sharable. 
+
+* If you aren't using any context from the action (i.e. you pass all your parameters as arguments and don't take advantage of the closure) then you don't really need Condi... it may be simpler/cleaner to just use helpers.
 
 
 Background

@@ -11,10 +11,12 @@ module Condi
   # @example define a predicate that determines whether or not to show a "free shipping" option.
   #     predicate(:show_free_shipping?) { user.new_customer? && cart.amount > 100 }
   # @example define a predicate that takes an element of a collection as an argument.
-  #     predicate(:shipping?) { |item| item.status == :shipped && DeliveryService.status(item.tracking_number) !~ /arrived/ }
+  #     predicate(:shipping?) { |item| @items.count >= 3 && 
+  #        item.status == :shipped && 
+  #        DeliveryService.status(item.tracking_number) !~ /arrived/ }
   # @example define a synonym that returns a css class based on item status
   #     synonym(:css_for_item_status) do |item| 
-  #       if item.status == :shipped 
+  #       if @items.count >= 3 && item.status == :shipped 
   #         if DeliveryService.status(item.tracking_number) !~ /arrived/
   #           "shipping"
   #         else
