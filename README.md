@@ -112,7 +112,7 @@ returns the css class we need for a given item?
 
 `app/views/store/_item.html.erb:`
     
-    <tr class="<%= css_for_item_status %>">
+    <tr class="<%= css_for_item_status(item) %>">
       <td><%= item.to_s %></td>
     </tr>
 
