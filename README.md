@@ -2,7 +2,7 @@
 Condi
 =====
 
-Condi is a gem that you use with Rails to make it easier to cleanly implement conditional elements in a view.
+Condi is a gem that you use with Rails to make it easier to cleanly implement conditional elements in a view and offers a clean and simple approach to separate business logic from your views and models.
 
 Condi allows you to define boolean-valued *predicates* in the controller that are callable in the view without relying on unneeded instance variables or business logic in the views.  Because the predicates are defined dynamically during a controller action, they are easy to find and easy to use without hopping around multiple files.
 
@@ -203,7 +203,7 @@ Advantages
 
 * Placing predicates in the Controller allows them to orchestrate multiple Models without breaking encapsulation between Models.  The Controller is arguably a better place to define such predicates from an MVC perspective.
 
-* Condi makes it simple to define predicates and synonyms in the Controller and call them from the view without cluttering the helper namespace and creating a maze of unique names for every action.  Condi is more flexible.
+* Condi makes it simple to define predicates and synonyms in the Controller and call them from the view without cluttering the helper namespace and creating a maze of unique helper names that are coupled to some action contexts and not others.  Condi is more flexible.
 
 * Another advantage of the predicate being defined dynamically on the Controller is that the predicate can never be inadvertently called as an action itself.  Condi offers better encapsulation of state.
 

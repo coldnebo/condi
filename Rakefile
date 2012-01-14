@@ -22,7 +22,7 @@ spec = Gem::Specification.new do |s|
   
   s.files       = PKG_FILES
   s.test_files  = TST_FILES
-  s.description = "Conditional UI predicates for Rails"
+  s.description = "Conditional UI predicates for Rails - a clean and simple approach to separate business logic from your views and models."
 
   s.name        = 'condi'
   s.date        = '2011-12-14'
