@@ -3,7 +3,7 @@ require 'rake/testtask'
 require 'yard'
 
 
-PKG_VERSION = '0.0.6'
+PKG_VERSION = '0.0.7'
 
 SRC_FILES = Dir.glob('lib/**/*')
 TST_FILES = Dir.glob('test/**/*')
@@ -25,7 +25,7 @@ spec = Gem::Specification.new do |s|
   s.description = "Conditional UI predicates for Rails - a clean and simple approach to separate business logic from your views and models."
 
   s.name        = 'condi'
-  s.date        = '2011-12-14'
+  s.date        = '2012-06-14'
   s.summary     = "Condi"
   s.authors     = ["Larry Kyrala"]
   s.email       = 'larry.kyrala@gmail.com'

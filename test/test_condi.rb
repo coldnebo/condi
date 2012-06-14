@@ -9,7 +9,7 @@ require 'condi'
 
 require 'ostruct'
 
-#require 'ruby-debug'
+#require 'debugger'
 
 
 class CondiTest < Test::Unit::TestCase
@@ -141,5 +141,23 @@ class CondiTest < Test::Unit::TestCase
     assert @controller_instance.css_for_item_status(item) == "processing"
   end
   
+
+  # fix for https://github.com/coldnebo/condi/issues/1
+  def test_lifespan
+    @controller_instance.request = Object.new   # simulate the first request
+    @controller_instance.instance_eval do 
+      predicate(:always_be_true?) { true }
+    end
+
+    assert @controller_instance.respond_to?(:always_be_true?)
+    assert @controller_instance.always_be_true? == true
+
+    @controller_instance.request = Object.new   # simulate a second request
+
+    # now, if a view calls the predicate, we shouldn't allow it!
+    assert_raise RuntimeError do
+      @controller_instance.always_be_true? 
+    end
+  end
 
 end

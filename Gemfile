@@ -4,7 +4,7 @@
 source :rubygems
 
 group :test do
-  #gem 'ruby-debug19'
+  #gem 'debugger'
 	gem 'simplecov', :require => false
 	gem 'mocha'
 	gem 'actionpack', '2.3.11'
