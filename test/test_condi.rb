@@ -142,7 +142,7 @@ class CondiTest < Test::Unit::TestCase
   end
   
 
-  # fix for https://github.com/coldnebo/condi/issues/1
+  # test for https://github.com/coldnebo/condi/issues/1
   def test_lifespan
     @controller_instance.request = Object.new   # simulate the first request
     @controller_instance.instance_eval do 
@@ -158,6 +158,32 @@ class CondiTest < Test::Unit::TestCase
     assert_raise RuntimeError do
       @controller_instance.always_be_true? 
     end
+  end
+
+
+  # test for https://github.com/coldnebo/condi/issues/2
+  def test_returns
+    @controller_instance.instance_eval do 
+      def my_action
+        first_path = true
+        predicate(:can_return?) do 
+          if first_path
+            return true
+          else
+            return false
+          end
+        end
+      end
+    end
+    @controller_instance.my_action
+
+    # don't raise a LocalJumpError: unexpected return!
+    assert_nothing_raised do
+      @controller_instance.can_return?
+    end
+
+    # also ensure the correct value was returned.
+    assert @controller_instance.can_return? == true
   end
 
 end
