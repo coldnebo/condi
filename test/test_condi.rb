@@ -2,7 +2,7 @@ require 'simplecov'
 SimpleCov.start
 
 require 'test/unit'
-require 'mocha'
+require 'mocha/setup'
 
 require 'action_controller'
 require 'condi'
