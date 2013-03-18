@@ -220,6 +220,40 @@ Disadvantages
 * If you aren't using any context from the action (i.e. you pass all your parameters as arguments and don't take advantage of the closure) then you don't really need Condi... it may be simpler/cleaner to just use helpers.
 
 
+"Kind Sir, This Offends Me And All People Who Truly Understand Rails MVC!"
+--------------------------------------------------------------------------
+
+* First, *relax*.
+
+* Second, realize that at it's heart, Condi is little more than a dynamic invocation of `helper_method`. [Look up the example](http://api.rubyonrails.org/classes/AbstractController/Helpers/ClassMethods.html#method-i-helper_method) for `helper_method` in the official Rails documentation:
+
+  <i>Declare a controller method as a helper. For example, the following makes the current_user controller method available to the view:
+
+        class ApplicationController < ActionController::Base
+          helper_method :current_user, :logged_in?
+
+          def current_user
+            @current_user ||= User.find_by_id(session[:user])
+          end
+
+          def logged_in?
+            current_user != nil
+          end
+        end
+
+  In a view:
+
+        <% if logged_in? -%>Welcome, <%= current_user.name %><% end -%>
+      </i>
+
+
+  Does it look similar to the Condi examples above?  That's why.
+
+* Three. Rethink your position as the 'one true protector' of pure MVC and realize that either Rails has encouraged bad MVC from the start (and Condi does no worse), or that Rails is balancing pure MVC with an easier to use *(read: pragmatic)* idiom (and Condi does no worse).  Either way, the novelty here *is NOT* the use of a helper... the novelty is making the `helper_method` dynamic through metaprogramming.  Would you like it better if I called it `dynamic_helper_method` instead of `predicate`? 
+
+* Four. Metaprogramming is not without its perils, but Condi is fully tested with extensive tests and you are free to look at the code, the issues and the tests and let me know if I've missed anything by submitting a pull request with failing test case or opening a new issue.  Thanks!
+
+
 Background
 ----------
 
