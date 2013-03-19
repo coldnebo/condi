@@ -1,4 +1,3 @@
-
 Condi
 =====
 
@@ -26,24 +25,27 @@ For example, say you have a User who has various roles and a shopping Cart that 
 
 `app/controllers/store_controller.rb:`
 
-    class StoreController
-      include Condi
-      
-      def checkout
-        user = User.find(user_id)
-        cart = Cart.find(cart_id)
-        predicate(:show_free_shipping?) { user.new_customer? && cart.amount > 100 }
-      end
-    end
+```ruby
+class StoreController
+  include Condi
+  
+  def checkout
+    user = User.find(user_id)
+    cart = Cart.find(cart_id)
+    predicate(:show_free_shipping?) { user.new_customer? && cart.amount > 100 }
+  end
+end
+```
 
 `app/views/store/checkout.html.erb:`
 
-    <% form_for @cart do |f| %>
-      <% if show_free_shipping? %>
-        <%= f.radio_button("cart", "shipping", "free_ground") %>
-      <% end %>
-    <% end %> 
-
+```erb
+<% form_for @cart do |f| %>
+  <% if show_free_shipping? %>
+    <%= f.radio_button("cart", "shipping", "free_ground") %>
+  <% end %>
+<% end %> 
+```
 
 Predicates with Arguments
 -------------------------
@@ -53,34 +55,39 @@ a predicate in this situation? You need a predicate with an argument!
 
 `app/controllers/store_controller.rb:`
 
-    class StoreController
-      include Condi
-      
-      def items
-        cart = Cart.find(cart_id)
-        @items = cart.items
-        predicate(:shipping?) { |item| @items.count >= 3 && 
-          item.status == :shipped && 
-          DeliveryService.status(item.tracking_number) !~ /arrived/ }
-      end
-    end
+```ruby
+class StoreController
+  include Condi
+  
+  def items
+    cart = Cart.find(cart_id)
+    @items = cart.items
+    predicate(:shipping?) { |item| @items.count >= 3 && 
+      item.status == :shipped && 
+      DeliveryService.status(item.tracking_number) !~ /arrived/ }
+  end
+end
+```
 
 `app/views/store/items.html.erb:`
 
-    <table>
-      <%= render :partial => "item", :collection => @items %>
-    </table>
+```erb
+<table>
+  <%= render :partial => "item", :collection => @items %>
+</table>
+```
 
 `app/views/store/_item.html.erb:`
-    
-    <% if shipping?(item) %>
-      <tr class="shipping">
-    <% else %>
-      <tr>
-    <% end %>
-      <td><%= item.to_s %></td>
-    </tr>
- 
+
+```erb    
+<% if shipping?(item) %>
+  <tr class="shipping">
+<% else %>
+  <tr>
+<% end %>
+  <td><%= item.to_s %></td>
+</tr>
+``` 
 
 Synonyms: defining blocks that return non-boolean values
 --------------------------------------------------------
@@ -90,32 +97,35 @@ returns the css class we need for a given item?
 
 `app/controllers/store_controller.rb:`
 
-    class StoreController
-      include Condi
-      
-      def items
-        cart = Cart.find(cart_id)
-        @items = cart.items
-        synonym(:css_for_item_status) do |item| 
-          if @items.count >= 3 && item.status == :shipped 
-            if DeliveryService.status(item.tracking_number) !~ /arrived/
-              "shipping"
-            else
-              "shipped"
-            end
-          else
-            "processing"
-          end
+```ruby
+class StoreController
+  include Condi
+  
+  def items
+    cart = Cart.find(cart_id)
+    @items = cart.items
+    synonym(:css_for_item_status) do |item| 
+      if @items.count >= 3 && item.status == :shipped 
+        if DeliveryService.status(item.tracking_number) !~ /arrived/
+          "shipping"
+        else
+          "shipped"
         end
+      else
+        "processing"
       end
     end
+  end
+end
+```
 
 `app/views/store/_item.html.erb:`
-    
-    <tr class="<%= css_for_item_status(item) %>">
-      <td><%= item.to_s %></td>
-    </tr>
 
+```erb    
+<tr class="<%= css_for_item_status(item) %>">
+  <td><%= item.to_s %></td>
+</tr>
+```
 
 The Problem
 -----------
@@ -124,49 +134,61 @@ Sometimes, pieces of your UI need to be enabled or disabled depending on certain
 
 Here's a typical implementation of the above example without Condi:
 
-    class StoreController
-      def checkout
-        @user = User.find(user_id)
-        @cart = Cart.find(cart_id)
-      end
-    end
+```ruby
+class StoreController
+  def checkout
+    @user = User.find(user_id)
+    @cart = Cart.find(cart_id)
+  end
+end
+```
 
-    <% form_for @cart do |f| %>
-      <% if @user.new_customer? && @cart.amount > 100 %>
-        <%= f.radio_button("cart", "shipping", "free_ground") %>
-      <% end %>
-    <% end %> 
+```erb
+<% form_for @cart do |f| %>
+  <% if @user.new_customer? && @cart.amount > 100 %>
+    <%= f.radio_button("cart", "shipping", "free_ground") %>
+  <% end %>
+<% end %> 
+```
 
 Not the cleanest approach since business logic is in our views now.  What's another alternative?  Maybe we can stick a predicate for displaying ground shipping on the Cart model instead?
 
-    class Cart
-      def show_free_shipping?(new_customer)
-        new_customer && amount > 100
-      end
-    end
+```ruby
+class Cart
+  def show_free_shipping?(new_customer)
+    new_customer && amount > 100
+  end
+end
+```
 
-    <% form_for @cart do |f| %>
-      <% if @cart.show_free_shipping?(@user.new_customer?) %>
-        <%= f.radio_button("cart", "shipping", "free_ground") %>
-      <% end %>
-    <% end %> 
+```erb
+<% form_for @cart do |f| %>
+  <% if @cart.show_free_shipping?(@user.new_customer?) %>
+    <%= f.radio_button("cart", "shipping", "free_ground") %>
+  <% end %>
+<% end %> 
+```
 
 We haven't gained much except shuffling arguments around and we're coupling Carts with Users unnecessarily.
 
 
 Or, we could put the predicate in a helper and remove the args:
 
-    class StoreHelper
-      def show_free_shipping?
-        @user.new_customer? && @cart.amount > 100
-      end
-    end
-  
-    <% form_for @cart do |f| %>
-      <% if show_free_shipping? %>
-        <%= f.radio_button("cart", "shipping", "free_ground") %>
-      <% end %>
-    <% end %> 
+```ruby
+class StoreHelper
+  def show_free_shipping?
+    @user.new_customer? && @cart.amount > 100
+  end
+end
+```
+
+```erb  
+<% form_for @cart do |f| %>
+  <% if show_free_shipping? %>
+    <%= f.radio_button("cart", "shipping", "free_ground") %>
+  <% end %>
+<% end %> 
+```
 
 This is a little better, but now we have variables set up in the controller and business logic in the helper.  It would be nicer if we could define the predicate in the controller where it is used, in the context of what the action has loaded (either into instance variables or locals).  Also if we have a large data-driven UI, we may have many such conditional UI predicates.  Managing them all can become quite complex.
 
@@ -176,23 +198,27 @@ Solution
 
 The way Condi solves this problem is to allow you to define predicates in the controller that are accessible in the view.
 
-    class StoreController
-      include Condi
+```ruby
+class StoreController
+  include Condi
 
-      def checkout
-        user = User.find(user_id)
-        cart = Cart.find(cart_id)
-        predicate(:show_free_shipping?) { user.new_customer? && cart.amount > 100 }
-      end
-    end
+  def checkout
+    user = User.find(user_id)
+    cart = Cart.find(cart_id)
+    predicate(:show_free_shipping?) { user.new_customer? && cart.amount > 100 }
+  end
+end
+```
 
 The `predicate` call creates a closure around the state we've loaded in the controller and makes it available to the view later without cluttering up the helper namespace or forcing the view to contain business logic.
 
-    <% form_for @cart do |f| %>
-      <% if show_free_shipping? %>
-        <%= f.radio_button("cart", "shipping", "free_ground") %>
-      <% end %>
-    <% end %> 
+```erb
+<% form_for @cart do |f| %>
+  <% if show_free_shipping? %>
+    <%= f.radio_button("cart", "shipping", "free_ground") %>
+  <% end %>
+<% end %> 
+```
 
 How does this work?  Behind the scenes, `predicate` defines an instance method on the controller and then marks it as a `helper_method` which allows Rails to call the predicate from the view.  Since the predicate is dynamically added, you don't have to worry about the controller instance containing any more predicates than you defined in that particular action, so it's easy to manage.
 
@@ -227,25 +253,27 @@ Disadvantages
 
 * Second, realize that at it's heart, Condi is little more than a dynamic invocation of `helper_method`. [Look up the example](http://api.rubyonrails.org/classes/AbstractController/Helpers/ClassMethods.html#method-i-helper_method) for `helper_method` in the official Rails documentation:
 
-  <i>Declare a controller method as a helper. For example, the following makes the current_user controller method available to the view:
+  _Declare a controller method as a helper. For example, the following makes the current_user controller method available to the view:_
 
-        class ApplicationController < ActionController::Base
-          helper_method :current_user, :logged_in?
+```ruby
+class ApplicationController < ActionController::Base
+  helper_method :current_user, :logged_in?
 
-          def current_user
-            @current_user ||= User.find_by_id(session[:user])
-          end
+  def current_user
+    @current_user ||= User.find_by_id(session[:user])
+  end
 
-          def logged_in?
-            current_user != nil
-          end
-        end
+  def logged_in?
+    current_user != nil
+  end
+end
+```
 
-  In a view:
+  _In a view:_
 
-        <% if logged_in? -%>Welcome, <%= current_user.name %><% end -%>
-      </i>
-
+```erb
+<% if logged_in? -%>Welcome, <%= current_user.name %><% end -%>
+```
 
   Does it look similar to the Condi examples above?  That's why.
 
